@@ -1,0 +1,26 @@
+server:
+  port: 8091
+
+spring:
+  main:
+    banner-mode: off
+  thymeleaf:
+    check-template-location: false
+  datasource:
+    hikari:
+      connection-test-query: SELECT 1
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres?currentSchema=public}
+    platform: postgres
+    username: ${DB_USER:postgres}
+    password: ${DB_PWD:password}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:c2VjcmV0X3Bhc3N3b3Jk}
+    expiration-time: ${JWT_EXPIRATION_TIME:3600000}
+
+logging.level.org.springframework.security: DEBUG
