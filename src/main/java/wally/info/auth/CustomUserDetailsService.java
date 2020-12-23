@@ -21,8 +21,10 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     if (userOptional.isPresent()) {
       var user = userOptional.get();
+
       return User.withUsername(user.getUsername())
           .password(user.getPassword())
+          .authorities(user.getRoles())
           .accountExpired(false)
           .accountLocked(false)
           .credentialsExpired(false)
