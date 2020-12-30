@@ -1,4 +1,4 @@
-package wally.info.auth;
+package wally.info.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,17 +12,20 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import wally.info.util.JwtTokenProvider;
 
 @Configuration
-@EnableWebSecurity(debug = true)
+@EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements WebMvcConfigurer {
+public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
   private final JwtTokenProvider jwtTokenProvider;
+  private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
-  public WebSecurityConfig(JwtTokenProvider jwtTokenProvider) {
+  public WebSecurityConfig(
+      JwtTokenProvider jwtTokenProvider,
+      CustomAccessDeniedHandler customAccessDeniedHandler) {
     this.jwtTokenProvider = jwtTokenProvider;
+    this.customAccessDeniedHandler = customAccessDeniedHandler;
   }
 
   @Override
@@ -33,10 +36,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements W
         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
         .authorizeRequests()
-        .antMatchers("/auth/**")
-        .permitAll()
         .anyRequest()
         .authenticated()
+        .and()
+        .exceptionHandling()
+        .accessDeniedHandler(customAccessDeniedHandler)
         .and()
         .addFilterBefore(
             new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
@@ -55,9 +59,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter implements W
 
   @Override
   public void configure(WebSecurity web) throws Exception {
-    web
-      .ignoring()
-      .antMatchers("/auth/**");
+    web.ignoring().antMatchers("/auth/**");
   }
-
 }

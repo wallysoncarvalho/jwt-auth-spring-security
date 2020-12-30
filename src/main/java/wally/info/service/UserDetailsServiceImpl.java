@@ -1,4 +1,4 @@
-package wally.info.auth;
+package wally.info.service;
 
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,10 +8,10 @@ import org.springframework.stereotype.Service;
 import wally.info.repository.UserRepository;
 
 @Service
-public class CustomUserDetailsService implements UserDetailsService {
+public class UserDetailsServiceImpl implements UserDetailsService {
   private final UserRepository userRepository;
 
-  public CustomUserDetailsService(UserRepository userRepository) {
+  public UserDetailsServiceImpl(UserRepository userRepository) {
     this.userRepository = userRepository;
   }
 

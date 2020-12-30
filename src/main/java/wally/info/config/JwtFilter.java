@@ -1,7 +1,8 @@
-package wally.info.auth;
+package wally.info.config;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import wally.info.util.JwtTokenProvider;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;

@@ -1,32 +1,33 @@
-package wally.info.auth;
+package wally.info.util;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
+import wally.info.config.JwtConfiguration;
 import wally.info.entity.UserRole;
+import wally.info.exception.InvalidTokenException;
+import wally.info.service.UserDetailsServiceImpl;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.util.Date;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
 public class JwtTokenProvider {
-  private SecurityConfig securityConfig;
-  private CustomUserDetailsService customUserDetailsService;
+  private JwtConfiguration securityConfig;
+  private UserDetailsServiceImpl userDetailsServiceImpl;
 
   public JwtTokenProvider(
-      SecurityConfig securityConfig, CustomUserDetailsService customUserDetailsService) {
+		JwtConfiguration securityConfig, UserDetailsServiceImpl userDetailsServiceImpl) {
     this.securityConfig = securityConfig;
-    this.customUserDetailsService = customUserDetailsService;
+    this.userDetailsServiceImpl = userDetailsServiceImpl;
   }
 
   public String createToken(String username, Set<UserRole> roles) {
@@ -36,7 +37,6 @@ public class JwtTokenProvider {
         "auth",
         roles.stream()
             .map(s -> new SimpleGrantedAuthority(s.getAuthority()))
-            .filter(Objects::nonNull)
             .collect(Collectors.toList()));
 
     var now = new Date();
@@ -51,7 +51,7 @@ public class JwtTokenProvider {
   }
 
   public Authentication getAuthentication(String token) {
-    var userDetails = customUserDetailsService.loadUserByUsername(getUsername(token));
+    var userDetails = userDetailsServiceImpl.loadUserByUsername(getUsername(token));
     return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
   }
 
@@ -65,7 +65,7 @@ public class JwtTokenProvider {
   public String resolveToken(HttpServletRequest request) {
     var bearerToken = request.getHeader("Authorization");
 
-    if(bearerToken != null && bearerToken.startsWith("Bearer ")) {
+    if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
       return bearerToken.substring(7);
     }
     return null;
@@ -76,8 +76,7 @@ public class JwtTokenProvider {
       Jwts.parserBuilder().setSigningKey(getKeyFromSecret()).build().parseClaimsJws(token);
       return true;
     } catch (JwtException | IllegalArgumentException e) {
-      //TODO: throw exception here...
-      return false;
+      throw new InvalidTokenException("Invalid token");
     }
   }
 
