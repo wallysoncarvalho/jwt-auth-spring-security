@@ -18,7 +18,6 @@ public class UserController {
 	@GetMapping("/client")
 	@PreAuthorize("hasRole('CLIENT')")
 	public String auth_client(HttpServletRequest http) {
-
 		return "Client authorized";
 	}
 

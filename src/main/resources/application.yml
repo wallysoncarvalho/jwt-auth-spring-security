@@ -12,13 +12,12 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres?currentSchema=public}
     platform: postgres
     username: ${DB_USER:postgres}
-    password: ${DB_PWD:password}
+    password: ${DB_PWD:postgres}
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: update
 
 security:
-  jwt:
-    secret: ${JWT_SECRET:TG9yZW0gSXBzdW0gaXMgc2ltcGx5IGR1bW15IHRleHQgb2YgdGhlIHByaW50aW5n}
-    expiration-time: ${JWT_EXPIRATION_TIME:3600000}
+  secret: ${JWT_SECRET:bGT2EI7sTPNymldVGDJuHuc6xDdOONKail29quWsMSw=}
+  expiration-time: ${JWT_EXPIRATION_TIME:3600000}

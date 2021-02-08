@@ -11,12 +11,12 @@ import java.io.Serializable;
 @Getter
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ApiResponse implements Serializable {
+public class ErrorResponse implements Serializable {
   private int status;
   private String message;
   private Object result;
 
-  public ApiResponse(int status, String message) {
+  public ErrorResponse(int status, String message) {
     this.status = status;
     this.message = message;
   }

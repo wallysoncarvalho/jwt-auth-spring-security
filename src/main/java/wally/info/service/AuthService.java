@@ -2,7 +2,7 @@ package wally.info.service;
 
 import org.springframework.stereotype.Service;
 import wally.info.entity.User;
-import wally.info.repository.UserRepository;
+import wally.info.repository.UserJpaRepository;
 import wally.info.util.JwtTokenProvider;
 
 import javax.servlet.http.HttpServletRequest;
@@ -10,19 +10,19 @@ import javax.servlet.http.HttpServletRequest;
 @Service
 public class AuthService {
   private final JwtTokenProvider jwtTokenProvider;
-  private final UserRepository userRepository;
+  private final UserJpaRepository userJpaRepository;
 
-  public AuthService(JwtTokenProvider jwtTokenProvider, UserRepository userRepository) {
+  public AuthService(JwtTokenProvider jwtTokenProvider, UserJpaRepository userJpaRepository) {
     this.jwtTokenProvider = jwtTokenProvider;
-    this.userRepository = userRepository;
+    this.userJpaRepository = userJpaRepository;
   }
 
   public User getUserDetails(HttpServletRequest http) {
 
     var userToken = jwtTokenProvider.resolveToken(http);
-    var username = jwtTokenProvider.getUsername(userToken);
+    var username = jwtTokenProvider.getSubject(userToken);
 
-    var userOptn = userRepository.findUserByUsername(username);
+    var userOptn = userJpaRepository.findUserByUsername(username);
 
     return userOptn.orElse(null);
   }

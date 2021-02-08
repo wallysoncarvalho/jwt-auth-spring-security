@@ -11,7 +11,10 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import wally.info.exception.AuthenticationEntryPointImpl;
 import wally.info.util.JwtTokenProvider;
 
 @Configuration
@@ -19,13 +22,16 @@ import wally.info.util.JwtTokenProvider;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
   private final JwtTokenProvider jwtTokenProvider;
-  private final CustomAccessDeniedHandler customAccessDeniedHandler;
+  private final AccessDeniedHandler accessDeniedHandler;
+  private final AuthenticationEntryPoint authenticationEntryPoint;
 
   public WebSecurityConfig(
       JwtTokenProvider jwtTokenProvider,
-      CustomAccessDeniedHandler customAccessDeniedHandler) {
+      AccessDeniedHandler accessDeniedHandler,
+      AuthenticationEntryPoint authenticationEntryPoint) {
     this.jwtTokenProvider = jwtTokenProvider;
-    this.customAccessDeniedHandler = customAccessDeniedHandler;
+    this.accessDeniedHandler = accessDeniedHandler;
+    this.authenticationEntryPoint = authenticationEntryPoint;
   }
 
   @Override
@@ -40,7 +46,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         .authenticated()
         .and()
         .exceptionHandling()
-        .accessDeniedHandler(customAccessDeniedHandler)
+        .accessDeniedHandler(accessDeniedHandler)
+        .authenticationEntryPoint(authenticationEntryPoint)
         .and()
         .addFilterBefore(
             new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);

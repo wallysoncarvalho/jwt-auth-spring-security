@@ -5,19 +5,19 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import wally.info.repository.UserRepository;
+import wally.info.repository.UserJpaRepository;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
-  private final UserRepository userRepository;
+  private final UserJpaRepository userJpaRepository;
 
-  public UserDetailsServiceImpl(UserRepository userRepository) {
-    this.userRepository = userRepository;
+  public UserDetailsServiceImpl(UserJpaRepository userJpaRepository) {
+    this.userJpaRepository = userJpaRepository;
   }
 
   @Override
-  public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
-    final var userOptional = this.userRepository.findUserByUsername(s);
+  public UserDetails loadUserByUsername(String subject) throws UsernameNotFoundException {
+    final var userOptional = this.userJpaRepository.findUserByUsername(subject);
 
     if (userOptional.isPresent()) {
       var user = userOptional.get();
@@ -31,6 +31,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
           .disabled(false)
           .build();
     }
-    throw new UsernameNotFoundException("Username " + s + " not found !");
+    throw new UsernameNotFoundException("Username " + subject + " not found !");
   }
 }

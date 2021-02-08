@@ -1,46 +1,43 @@
 package wally.info.util;
 
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
-import wally.info.config.JwtConfiguration;
+import wally.info.config.SecurityConfigurations;
+import wally.info.entity.User;
 import wally.info.entity.UserRole;
 import wally.info.exception.InvalidTokenException;
 import wally.info.service.UserDetailsServiceImpl;
 
-import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
 public class JwtTokenProvider {
-  private JwtConfiguration securityConfig;
+  private SecurityConfigurations securityConfig;
   private UserDetailsServiceImpl userDetailsServiceImpl;
 
   public JwtTokenProvider(
-		JwtConfiguration securityConfig, UserDetailsServiceImpl userDetailsServiceImpl) {
+      SecurityConfigurations securityConfig, UserDetailsServiceImpl userDetailsServiceImpl) {
     this.securityConfig = securityConfig;
     this.userDetailsServiceImpl = userDetailsServiceImpl;
   }
 
-  public String createToken(String username, Set<UserRole> roles) {
+  public String createToken(String username, Set<String> roles) {
     var claims = Jwts.claims().setSubject(username);
 
-    claims.put(
-        "auth",
-        roles.stream()
-            .map(s -> new SimpleGrantedAuthority(s.getAuthority()))
-            .collect(Collectors.toList()));
+    claims.put("roles", roles);
 
     var now = new Date();
-    var expiration = new Date(now.getTime() + securityConfig.getEXPIRATION_TIME());
+    var expiration = new Date(now.getTime() + securityConfig.getExpirationTime());
 
     return Jwts.builder()
         .setClaims(claims)
@@ -51,11 +48,11 @@ public class JwtTokenProvider {
   }
 
   public Authentication getAuthentication(String token) {
-    var userDetails = userDetailsServiceImpl.loadUserByUsername(getUsername(token));
+    var userDetails = userDetailsServiceImpl.loadUserByUsername(getSubject(token));
     return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
   }
 
-  public String getUsername(String token) {
+  public String getSubject(String token) {
     var parsed =
         Jwts.parserBuilder().setSigningKey(getKeyFromSecret()).build().parseClaimsJws(token);
 
@@ -75,13 +72,21 @@ public class JwtTokenProvider {
     try {
       Jwts.parserBuilder().setSigningKey(getKeyFromSecret()).build().parseClaimsJws(token);
       return true;
-    } catch (JwtException | IllegalArgumentException e) {
-      throw new InvalidTokenException("Invalid token");
+    } catch (SignatureException ex) {
+      throw new SignatureException("Invalid JWT signature");
+    } catch (MalformedJwtException ex) {
+      throw new MalformedJwtException("Invalid JWT token");
+    } catch (ExpiredJwtException ex) {
+      throw new ExpiredJwtException(null, null, "Expired JWT token");
+    } catch (UnsupportedJwtException ex) {
+      throw new UnsupportedJwtException("Unsupported JWT token");
+    } catch (IllegalArgumentException ex) {
+      throw new IllegalArgumentException("JWT claims string is empty.");
     }
   }
 
   private Key getKeyFromSecret() {
-    var signatureAlgorithm = SignatureAlgorithm.HS256;
-    return new SecretKeySpec(securityConfig.getSECRET(), signatureAlgorithm.getJcaName());
+    var decodedSecret = Base64.getDecoder().decode(securityConfig.getSecret());
+    return Keys.hmacShaKeyFor(decodedSecret);
   }
 }
